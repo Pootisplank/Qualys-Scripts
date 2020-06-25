@@ -1,5 +1,7 @@
 import requests
 from getpass import getpass
+import xml.etree.ElementTree as ET
+
 
 def formatResponse(response):
   # Reformats the response
@@ -82,8 +84,56 @@ def getReportList(session):
   print(responseFormatted, file=open("reportList.xml","w"))
 
 
+def getReportTemplates(session):
+  url = "https://qualysapi.qualys.com/msp/report_template_list.php"
+  headers = {
+    'X-Requested-With': 'PyRequests',
+  }
+  # Makes the request and stores the response
+  response = session.get(url, headers = headers)
+  
+  # Reformat and save response
+  responseFormatted = formatResponse(response)
+  print(responseFormatted, file=open("reportTemplates.xml","w"))
+
+
+def launchScoreCard(session):
+  url = "https://qualysapi.qualys.com/api/2.0/fo/report/scorecard/"
+  headers = {
+    'X-Requested-With': 'PyRequests',
+  }
+  params = {
+    'action' : 'launch',
+    'name' : 'Alex *Global* GISG VM KRI (Asset tags) BU-All (3-5)',
+    'output_format' : 'xml'
+  }
+
+  # Makes the request and stores the response
+  response = session.post(url, headers = headers, params = params)
+
+  # Reformat and save response
+  responseFormatted = formatResponse(response)
+  print(responseFormatted, file=open("launchScoreCard.xml","w"))
+
+
+def findReportID(session, reportName):
+  file = 'reportList.xml'
+
+  # Parse xml file
+  tree = ET.parse(file)
+  root = tree.getroot()
+
+  # Find the first report with title reportName and print the report ID
+  for report in root.find("RESPONSE").find("REPORT_LIST").findall("REPORT"):
+      if report.find("TITLE").text == reportName:
+          return report.find("ID").text
+
 
 session = login()
 getHost(session)
+getReportTemplates(session) # Access denied at the moment
+#launchScoreCard(session)
 getReportList(session)
+print(findReportID(session, "Alex *Global* GISG VM KRI (Asset tags) BU-All (3-5)"))
+
 logout(session)
