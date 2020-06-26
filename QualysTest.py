@@ -44,7 +44,7 @@ def logout(session):
     'X-Requested-With': 'PyRequests',
   }
 
-  # Makes request and stores response
+  # Makes request
   response = session.post(url, headers = headers, params = payload)
 
   # Reformat and save response
@@ -58,7 +58,7 @@ def getHost(session):
   headers = {
     'X-Requested-With': 'PyRequests',
   }
-  # Makes the request and stores response
+  # Makes the request
   response = session.get(url, headers=headers, params = payload)
 
   # Reformat and save response
@@ -76,7 +76,7 @@ def getReportList(session):
     'Content-Type' : 'text/xml'
   }
 
-  # Makes the request and stores the response
+  # Makes the request
   response = session.get(url, headers = headers, params = params)
   
   # Reformat and save response
@@ -89,7 +89,7 @@ def getReportTemplates(session):
   headers = {
     'X-Requested-With': 'PyRequests',
   }
-  # Makes the request and stores the response
+  # Makes the request
   response = session.get(url, headers = headers)
   
   # Reformat and save response
@@ -108,7 +108,7 @@ def launchScoreCard(session):
     'output_format' : 'xml'
   }
 
-  # Makes the request and stores the response
+  # Makes the request
   response = session.post(url, headers = headers, params = params)
 
   # Reformat and save response
@@ -129,11 +129,28 @@ def findReportID(session, reportName):
           return report.find("ID").text
 
 
+def downloadReport(session, reportID):
+  url = "https://qualysapi.qualys.com/api/2.0/fo/report/"
+  headers = {
+    'X-Requested-With': 'PyRequests',
+  }
+  params = {
+    'action' : 'fetch',
+    'id' : reportID
+  }
+
+  response = session.post(url = url, headers = headers, params = params)
+  # Reformat and save response
+  responseFormatted = formatResponse(response)
+  print(responseFormatted, file=open("downloadReport.xml","w"))
+
+
 session = login()
 getHost(session)
 getReportTemplates(session) # Access denied at the moment
 #launchScoreCard(session)
 getReportList(session)
-print(findReportID(session, "Alex *Global* GISG VM KRI (Asset tags) BU-All (3-5)"))
+reportID = findReportID(session, "Alex *Global* GISG VM KRI (Asset tags) BU-All (3-5)")
+downloadReport(session, reportID)
 
 logout(session)
