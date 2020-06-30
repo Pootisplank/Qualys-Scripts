@@ -12,7 +12,7 @@ def formatResponse(response):
 
 
 def login():
-  username = input("Enter username: ")
+  username = input("Enter a username: ")
   password = getpass()
 
   url = "https://qualysapi.qualys.com/api/2.0/fo/session/"
@@ -97,14 +97,14 @@ def getReportTemplates(session):
   print(responseFormatted, file=open("reportTemplates.xml","w"))
 
 
-def launchScoreCard(session):
+def launchScoreCard(session, name):
   url = "https://qualysapi.qualys.com/api/2.0/fo/report/scorecard/"
   headers = {
     'X-Requested-With': 'PyRequests',
   }
   params = {
     'action' : 'launch',
-    'name' : 'Alex *Global* GISG VM KRI (Asset tags) BU-All (3-5)',
+    'name' : name,
     'output_format' : 'xml'
   }
 
@@ -144,13 +144,3 @@ def downloadReport(session, reportID):
   responseFormatted = formatResponse(response)
   print(responseFormatted, file=open("downloadReport.xml","w"))
 
-
-session = login()
-getHost(session)
-getReportTemplates(session) # Access denied at the moment
-#launchScoreCard(session)
-getReportList(session)
-reportID = findReportID(session, "Alex *Global* GISG VM KRI (Asset tags) BU-All (3-5)")
-downloadReport(session, reportID)
-
-logout(session)
