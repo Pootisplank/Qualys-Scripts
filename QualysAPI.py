@@ -109,7 +109,7 @@ def launchScoreCard(session, name):
   }
 
   # Makes the request
-  response = session.post(url, headers = headers, params = params)
+  response = session.post(url, headers = headers, data = params)
 
   # Reformat and save response
   responseFormatted = formatResponse(response)

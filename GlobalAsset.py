@@ -1,6 +1,6 @@
 import requests
 from getpass import getpass
-from GetReports import formatResponse
+from QualysAPI import formatResponse
 
 
 # Token expires in 4 hours
@@ -16,13 +16,17 @@ def getToken():
         'token' : 'true'
     }
 
-    headers = {"ContentType" : "application/x-www-form-urlencoded"}
+    headers = {
+        "ContentType" : "application/x-www-form-urlencoded",
+        "X-Requested-With" : "PyRequests"
+    }
 
-    request = requests.post(url = url, params = payload, headers = headers)
+    request = requests.post(url = url, data = payload, headers = headers)
 
-    responseFormatted = formatResponse(request)
-    print(responseFormatted, file=open("token.xml","w"))
-    print("Getting Token")
+    token = formatResponse(request)
+    print("Token receieved, login successful.")
+    print(token, file=open("token.txt", "w"))
+    return token
 
-
+    
 getToken()
