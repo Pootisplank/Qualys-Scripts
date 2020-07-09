@@ -19,7 +19,6 @@ def getToken():
 
     headers = {
         "ContentType" : "application/x-www-form-urlencoded",
-        "X-Requested-With" : "PyRequests"
     }
 
     request = requests.post(url = url, data = payload, headers = headers)
@@ -48,6 +47,25 @@ def refreshToken():
         print("Token Expired, please login again.")
         getToken()
 
+
+# Returns the total number of assets
+def assetCount():
+    # Get token.
+    with open('token.txt', 'r') as file:
+        token = file.readline().strip('\n')
+
+    url = 'https://gateway.qg1.apps.qualys.com/am/v1/assets/host/count'
+
+    headers = {'Authorization' : 'Bearer ' + token}
+
+    # Make the request and get count of assets
+    request = requests.post(url = url, headers = headers)
+
+    response = eval(formatResponse(request))
+    return response['count']
     
-#getToken()
+
+
+
 refreshToken()
+assetCount()
