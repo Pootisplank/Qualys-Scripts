@@ -1,11 +1,12 @@
 import requests
 import datetime
+import os.path
 from getpass import getpass
 from QualysAPI import formatResponse
 
 
-# Token expires in 4 hours
-def getToken():
+# Generates a token that expires in 4 hours.
+def generateToken():
     username = input("Enter the username: ")
     password = getpass()
 
@@ -32,6 +33,11 @@ def getToken():
 
 # Checks if token has expired.  If so, generates a new token.
 def refreshToken():
+    # If token record does not exist, regenerate token.
+    if (not(os.path.isfile('token.txt'))):
+        generateToken()
+        return
+
     # Gets when the token was generated.
     with open('token.txt', 'r') as file:
         file.readline()
@@ -45,14 +51,21 @@ def refreshToken():
     # If the token was generated four hours or later ago, get a new token.
     if (time_difference >= 4):
         print("Token Expired, please login again.")
-        getToken()
+        generateToken()
+
+
+# Gets the token from token.txt and returns it.
+def getToken():
+    with open('token.txt', 'r') as file:
+        token = file.readline().strip('\n')
+    return token
 
 
 # Returns the total number of assets
 def assetCount():
-    # Get token.
-    with open('token.txt', 'r') as file:
-        token = file.readline().strip('\n')
+    refreshToken()
+    # Get the token
+    token = getToken()
 
     url = 'https://gateway.qg1.apps.qualys.com/am/v1/assets/host/count'
 
@@ -65,7 +78,23 @@ def assetCount():
     return response['count']
     
 
+# Gets details of all assets
+def assetDetails():
+    refreshToken()
+    # Get token.
+    token = getToken()
+
+    url = "https://gateway.qg1.apps.qualys.com/am/v1/assets/host/list"
+
+    headers = {
+        'Authorization' : 'Bearer ' + token,
+    }
+
+    # Make the request
+    request = requests.post(url = url, headers = headers)
+    response = formatResponse(request)
+
+    print(response, file=open("assetDetails.json", "w"))
 
 
-refreshToken()
-assetCount()
+assetDetails()
