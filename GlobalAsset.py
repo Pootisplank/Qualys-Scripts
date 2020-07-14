@@ -62,7 +62,7 @@ def getToken():
 
 
 # Returns the total number of assets
-def assetCount():
+def assetCount(last_seen_id):
     refreshToken()
     # Get the token
     token = getToken()
@@ -80,21 +80,22 @@ def assetCount():
 
 # Gets details of all assets
 def assetDetails():
-    refreshToken()
-    # Get token.
-    token = getToken()
-
     url = "https://gateway.qg1.apps.qualys.com/am/v1/assets/host/list"
 
     headers = {
         'Authorization' : 'Bearer ' + token,
     }
 
-    # Make the request
-    request = requests.post(url = url, headers = headers)
-    response = formatResponse(request)
+    while (num_assets > 0):
+        # Get token
+        refreshToken()
+        token = getToken()
 
-    print(response, file=open("assetDetails.json", "w"))
+        # Make the request
+        request = requests.post(url = url, headers = headers)
+        response = formatResponse(request)
+
+        print(response, file=open("assetDetails.json", "w"))
 
 
 assetDetails()
