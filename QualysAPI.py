@@ -1,13 +1,15 @@
+import xml.etree.ElementTree as ET
 import requests
 from getpass import getpass
-import xml.etree.ElementTree as ET
+
 
 
 def formatResponse(response):
   # Reformats the response
-  responseFormatted = str(response.content)
-  responseFormatted = responseFormatted.replace('\\n', '\n')
-  responseFormatted = responseFormatted[2:-1]
+  #responseFormatted = str(response.content)
+  #responseFormatted = responseFormatted.replace('\\n', '\n')
+  #responseFormatted = responseFormatted[2:-1]
+  responseFormatted = response.content.decode('utf-8')
   return responseFormatted
 
 

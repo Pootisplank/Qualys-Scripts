@@ -1,4 +1,4 @@
-import QualysAPI
+from QualysAPI import *
 
 # Logs in with username/password, downloads report list, runs/downloads a report of your choice.
 
