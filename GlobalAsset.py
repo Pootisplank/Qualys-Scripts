@@ -1,8 +1,10 @@
-import requests
+from time import sleep
 import datetime
 import os.path
 import json
 from getpass import getpass
+
+import requests
 from QualysAPI import formatResponse
 
 
@@ -149,7 +151,7 @@ def assetDetails():
 def internetFacingCount():
     refreshToken()
     token = getToken()
-    url = "https://gateway.qg1.apps.qualys.com/am/v1/assets/host/list"
+    url = "https://gateway.qg1.apps.qualys.com/am/v1/assets/host/filter/list"
         
     last_seen_id = "0"
     has_more = 1
@@ -157,15 +159,18 @@ def internetFacingCount():
 
     headers = {
         'Authorization' : 'Bearer ' + token,
-        'includeFields' : 'agentID'
+        'includeFields' : 'tag'
     }
         
     payload = {
         'lastSeenAssetId' : last_seen_id,
+        'includeFields' : 'tag',
+        'filter' : 'tags.name:BU~*'
     }
 
     i = 0
-    while (i < 5):
+    while (has_more != 0):
+        sleep(10)
         # Get token
         refreshToken()
         token = getToken()
@@ -176,19 +181,18 @@ def internetFacingCount():
 
         # Create a json object from the response.
         asset_json = json.loads(response)
-            
-        # Search for internet-facing assets.
-        for asset in (asset_json["assetListData"]["asset"]):
-            for tag in asset["tagList"]["tag"]:
-                if ("BU~" in tag["tagName"]):
-                    final_count = final_count + 1
-                    
+                          
         # Update last_seen_id
         payload['lastSeenAssetId'] = f"{asset_json['lastSeenAssetId']}"
+        final_count += asset_json["count"]
             
         # Update has_more
         has_more = asset_json["hasMore"]
         i = i + 1
+        
+        # Save the final report
+        # with open("assetDetails.json", "w") as file:
+            # json.dump(asset_json, file, indent=4)
             
     return final_count
         
