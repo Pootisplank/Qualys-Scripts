@@ -1,5 +1,7 @@
+# Import Standard Library
 from time import sleep
-import datetime
+from datetime import datetime
+from sys import exit
 import os.path
 import json
 from getpass import getpass
@@ -30,7 +32,7 @@ def generateToken():
     token = formatResponse(request)
     print("Token receieved, login successful.")
     print(token, file=open("token.txt", "w"))
-    print(datetime.datetime.now(), file=open("token.txt", "a"))
+    print(datetime.now(), file=open("token.txt", "a"))
     return token
 
 
@@ -47,8 +49,8 @@ def refreshToken():
         date = file.readline().strip('\n')
 
     # Computes how much time as passed since token was generated.
-    token_time = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
-    current_time = datetime.datetime.now()
+    token_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
+    current_time = datetime.now()
     time_difference = (current_time - token_time).total_seconds() / 3600
 
     # If the token was generated four hours or later ago, get a new token.
@@ -56,7 +58,6 @@ def refreshToken():
         print("Token Expired, please login again.")
         generateToken()
         
-
 
 # Gets the token from token.txt and returns it.
 def getToken():
@@ -156,6 +157,7 @@ def internetFacingCount():
     last_seen_id = "0"
     has_more = 1
     final_count = 0
+    if_json_list = []
 
     headers = {
         'Authorization' : 'Bearer ' + token,
@@ -168,32 +170,56 @@ def internetFacingCount():
         'filter' : 'tags.name:BU~*'
     }
 
-    i = 0
-    while (has_more != 0):
-        sleep(10)
+    pages = 0
+    while (pages < 2):
+        #sleep(3)
         # Get token
         refreshToken()
         token = getToken()
+
 
         # Make the request
         request = requests.post(url = url, headers = headers, data = payload)
         response = formatResponse(request)
 
-        # Create a json object from the response.
+        # Check for request error
+        if (request.status_code != 200):
+            error_msg = "Error: Status Code " + f"{request.status_code}. Read " + f"{pages}" + " pages. Exiting program."
+            print(error_msg)
+            current_time = datetime.now().strftime("%b-%d-%y-%H:%M:%S")
+            
+            # Save error log
+            with open(f"./logs/{current_time}", "w") as file:
+                file.write(error_msg)
+            exit()
+                       
+        # Create a json object from the response and add it to the list.
         asset_json = json.loads(response)
+        if_json_list.append(asset_json)
                           
         # Update last_seen_id
         payload['lastSeenAssetId'] = f"{asset_json['lastSeenAssetId']}"
+        
         final_count += asset_json["count"]
             
         # Update has_more
         has_more = asset_json["hasMore"]
-        i = i + 1
+        pages += 1
+    
+    # Merge all reports in the list of json objects.
+    master_internet_facing = if_json_list[0]
+    for index in range(1, len(if_json_list)):
+        master_internet_facing["count"] += if_json_list[index]["count"]
+        assetListData = if_json_list[index]["assetListData"]["asset"]
         
-        # Save the final report
-        # with open("assetDetails.json", "w") as file:
-            # json.dump(asset_json, file, indent=4)
+        for data in assetListData:
+            master_internet_facing["assetListData"]["asset"].append(data)
+        
+    # Save the final report
+    with open("internetFacing.json", "w") as file:
+        json.dump(master_internet_facing, file, indent=4)
             
     return final_count
+        
         
 print(internetFacingCount())
