@@ -1,5 +1,5 @@
 # Import Standard Library
-from time import sleep
+import time
 from datetime import datetime
 from sys import exit
 import os.path
@@ -12,10 +12,10 @@ from QualysAPI import formatResponse
 
 # Generates a token that expires in 4 hours.
 def generateToken():
-    username = input("Enter the username: ")
+    username = input('Enter the username: ')
     password = getpass()
 
-    url = "https://gateway.qg1.apps.qualys.com/auth/"
+    url = 'https://gateway.qg1.apps.qualys.com/auth/'
 
     payload = {
         'username' : username, 
@@ -24,15 +24,15 @@ def generateToken():
     }
 
     headers = {
-        "ContentType" : "application/x-www-form-urlencoded",
+        'ContentType' : 'application/x-www-form-urlencoded',
     }
 
     request = requests.post(url = url, data = payload, headers = headers)
 
     token = formatResponse(request)
-    print("Token receieved, login successful.")
-    print(token, file=open("token.txt", "w"))
-    print(datetime.now(), file=open("token.txt", "a"))
+    print('Token receieved, login successful.')
+    print(token, file=open('token.txt', 'w'))
+    print(datetime.now(), file=open('token.txt', 'a'))
     return token
 
 
@@ -55,7 +55,7 @@ def refreshToken():
 
     # If the token was generated four hours or later ago, get a new token.
     if (time_difference >= 4):
-        print("Token Expired, please login again.")
+        print('Token Expired, please login again.')
         generateToken()
         
 
@@ -90,9 +90,9 @@ def assetCount(last_seen_id):
 def assetDetails():
     refreshToken()
     token = getToken()
-    url = "https://gateway.qg1.apps.qualys.com/am/v1/assets/host/list"
+    url = 'https://gateway.qg1.apps.qualys.com/am/v1/assets/host/list'
     
-    last_seen_id = "0"
+    last_seen_id = '0'
     has_more = 1
 
     headers = {
@@ -123,10 +123,10 @@ def assetDetails():
                 
         # Update last_seen_id
         last_seen_id = asset_json['lastSeenAssetId']
-        payload['lastSeenAssetId'] = f"{last_seen_id}"
+        payload['lastSeenAssetId'] = f'{last_seen_id}'
         
         # Update has_more
-        has_more = asset_json["hasMore"]
+        has_more = asset_json['hasMore']
         i = i + 1
         
         
@@ -134,30 +134,34 @@ def assetDetails():
     master_asset_details = asset_json_list[0]
     
     # Update the lastSeenAssetID in the final report.
-    master_asset_details["lastSeenAssetId"] = asset_json_list[len(asset_json_list) - 1]["lastSeenAssetId"]
+    master_asset_details['lastSeenAssetId'] = asset_json_list[len(asset_json_list) - 1]['lastSeenAssetId']
     
     # Merge all reports in the list of json objects.
     for index in range(1, len(asset_json_list)):
-        master_asset_details["count"] += asset_json_list[index]["count"]
-        assetListData = asset_json_list[index]["assetListData"]["asset"]
+        master_asset_details['count'] += asset_json_list[index]['count']
+        assetListData = asset_json_list[index]['assetListData']['asset']
         
         for data in assetListData:
-            master_asset_details["assetListData"]["asset"].append(data)
+            master_asset_details['assetListData']['asset'].append(data)
         
     # Save the final report
-    with open("assetDetails.json", "w") as file:
+    with open('assetDetails.json', 'w') as file:
         json.dump(master_asset_details, file, indent=4)
         
 
 def internetFacingCount():
     refreshToken()
     token = getToken()
-    url = "https://gateway.qg1.apps.qualys.com/am/v1/assets/host/filter/list"
-        
-    last_seen_id = "0"
+    url = 'https://gateway.qg1.apps.qualys.com/am/v1/assets/host/filter/list'
+
+    # Initialize variables
+    pages = 0
+    time_msg = ''        
+    last_seen_id = '0'
     has_more = 1
     final_count = 0
     if_json_list = []
+    current_time = datetime.now().strftime('%b-%d-%y-%H:%M:%S')
 
     headers = {
         'Authorization' : 'Bearer ' + token,
@@ -170,13 +174,16 @@ def internetFacingCount():
         'filter' : 'tags.name:BU~*'
     }
 
-    pages = 0
-    while (pages < 2):
-        #sleep(3)
+    while (pages < 10):
+        # Record time for logging
+        start_time = time.time()
+        
+        # Add delay between each api call
+        time.sleep(2)
+        
         # Get token
         refreshToken()
         token = getToken()
-
 
         # Make the request
         request = requests.post(url = url, headers = headers, data = payload)
@@ -184,12 +191,12 @@ def internetFacingCount():
 
         # Check for request error
         if (request.status_code != 200):
-            error_msg = "Error: Status Code " + f"{request.status_code}. Read " + f"{pages}" + " pages. Exiting program."
+            time_msg += ('Page %s (Crash) - %s seconds\n' % (pages, time.time() - start_time))
+            error_msg = 'Error: Status Code ' + f'{request.status_code}. Read ' + f'{pages}' + ' pages. Exiting program.\n' + time_msg
             print(error_msg)
-            current_time = datetime.now().strftime("%b-%d-%y-%H:%M:%S")
             
             # Save error log
-            with open(f"./logs/{current_time}", "w") as file:
+            with open(f'./logs/error/{current_time}', 'w') as file:
                 file.write(error_msg)
             exit()
                        
@@ -198,27 +205,35 @@ def internetFacingCount():
         if_json_list.append(asset_json)
                           
         # Update last_seen_id
-        payload['lastSeenAssetId'] = f"{asset_json['lastSeenAssetId']}"
+        payload['lastSeenAssetId'] = asset_json['lastSeenAssetId']
         
-        final_count += asset_json["count"]
+        final_count += asset_json['count']
             
         # Update has_more
-        has_more = asset_json["hasMore"]
+        has_more = asset_json['hasMore']
+        
+        time_msg += ('Page %s - %s seconds\n' % (pages, time.time() - start_time))
+        
         pages += 1
     
     # Merge all reports in the list of json objects.
     master_internet_facing = if_json_list[0]
+    master_internet_facing['lastSeenAssetId'] = payload['lastSeenAssetId']
     for index in range(1, len(if_json_list)):
-        master_internet_facing["count"] += if_json_list[index]["count"]
-        assetListData = if_json_list[index]["assetListData"]["asset"]
+        master_internet_facing['count'] += if_json_list[index]['count']
+        assetListData = if_json_list[index]['assetListData']['asset']
         
         for data in assetListData:
-            master_internet_facing["assetListData"]["asset"].append(data)
+            master_internet_facing['assetListData']['asset'].append(data)
         
     # Save the final report
-    with open("internetFacing.json", "w") as file:
+    with open('internetFacing.json', 'w') as file:
         json.dump(master_internet_facing, file, indent=4)
-            
+    
+    # Save log
+    with open(f'./logs/{current_time}', 'w') as file:
+        file.write(time_msg)        
+        
     return final_count
         
         
