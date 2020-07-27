@@ -41,7 +41,7 @@ def login():
 
 def logout(session):
   url = "https://qualysapi.qualys.com/api/2.0/fo/session/"
-  payload = {'action': 'logout'}
+  payload = {'action': 'logout'}  
   headers = {
     'X-Requested-With': 'PyRequests',
   }
