@@ -171,10 +171,11 @@ def internetFacingCount():
     payload = {
         'lastSeenAssetId' : last_seen_id,
         'includeFields' : 'tag',
-        'filter' : 'operatingSystem.publisher:Oracle'
+        #'filter' : 'tags.name:TMCC - AK-Windows Assets'
+        'filter' : 'tags.name:"OI: Disk Full"'
     }
 
-    while (pages < 10):
+    while (has_more != 0):
         # Record time for logging
         start_time = time.time()
         
