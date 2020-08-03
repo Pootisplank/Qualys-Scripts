@@ -155,7 +155,7 @@ def internetFacingCount():
     url = 'https://gateway.qg1.apps.qualys.com/am/v1/assets/host/filter/list'
 
     # Initialize variables
-    pages = 0
+    pages = 1
     time_msg = ''        
     last_seen_id = '0'
     has_more = 1
@@ -171,7 +171,7 @@ def internetFacingCount():
     payload = {
         'lastSeenAssetId' : last_seen_id,
         'includeFields' : 'tag',
-        'filter' : 'tags.name:BU~*'
+        'filter' : 'operatingSystem.publisher:Oracle'
     }
 
     while (pages < 10):
@@ -179,7 +179,7 @@ def internetFacingCount():
         start_time = time.time()
         
         # Add delay between each api call
-        time.sleep(2)
+        time.sleep(1)
         
         # Get token
         refreshToken()
@@ -192,7 +192,7 @@ def internetFacingCount():
         # Check for request error
         if (request.status_code != 200):
             time_msg += ('Page %s (Crash) - %s seconds\n' % (pages, time.time() - start_time))
-            error_msg = 'Error: Status Code ' + f'{request.status_code}. Read ' + f'{pages}' + ' pages. Exiting program.\n' + time_msg
+            error_msg = 'Error: Status Code ' + f'{request.status_code}. Read ' + f'{pages-1}' + ' pages. Exiting program.\n' + time_msg
             print(error_msg)
             
             # Save error log
