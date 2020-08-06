@@ -84,69 +84,6 @@ def assetCount(last_seen_id):
 
     response = eval(formatResponse(request))
     return response['count']
-    
-
-# Gets details of all assets
-def assetDetails():
-    refreshToken()
-    token = getToken()
-    url = 'https://gateway.qg1.apps.qualys.com/am/v1/assets/host/list'
-    
-    last_seen_id = '0'
-    has_more = 1
-
-    headers = {
-        'Authorization' : 'Bearer ' + token,
-        'includeFields' : 'agentID'
-    }
-    
-    payload = {
-        'lastSeenAssetId' : last_seen_id,
-    }
-    
-    asset_json_list = []
-
-    i = 0
-    # Get all asset information in a list of json objects.
-    while (i < 5):
-        # Get token
-        refreshToken()
-        token = getToken()
-
-        # Make the request
-        request = requests.post(url = url, headers = headers, data = payload)
-        response = formatResponse(request)
-
-        # Create a json object from the response and add it to the list of reports.
-        asset_json = json.loads(response)
-        asset_json_list.append(asset_json)
-                
-        # Update last_seen_id
-        last_seen_id = asset_json['lastSeenAssetId']
-        payload['lastSeenAssetId'] = f'{last_seen_id}'
-        
-        # Update has_more
-        has_more = asset_json['hasMore']
-        i = i + 1
-        
-        
-    # Initialize the final json report as the first json in the list.
-    master_asset_details = asset_json_list[0]
-    
-    # Update the lastSeenAssetID in the final report.
-    master_asset_details['lastSeenAssetId'] = asset_json_list[len(asset_json_list) - 1]['lastSeenAssetId']
-    
-    # Merge all reports in the list of json objects.
-    for index in range(1, len(asset_json_list)):
-        master_asset_details['count'] += asset_json_list[index]['count']
-        assetListData = asset_json_list[index]['assetListData']['asset']
-        
-        for data in assetListData:
-            master_asset_details['assetListData']['asset'].append(data)
-        
-    # Save the final report
-    with open('assetDetails.json', 'w') as file:
-        json.dump(master_asset_details, file, indent=4)
         
 
 def internetFacingCount():
@@ -171,8 +108,8 @@ def internetFacingCount():
     payload = {
         'lastSeenAssetId' : last_seen_id,
         'includeFields' : 'tag',
-        #'filter' : 'tags.name:TMCC - AK-Windows Assets'
-        'filter' : 'tags.name:"OI: Disk Full"'
+        'filter' : 'tags.name:TMCC - AK-Windows Assets'
+        #'filter' : 'tags.name:"OI: Disk Full"'
     }
 
     while (has_more != 0):
