@@ -49,7 +49,7 @@ def refreshToken():
         date = file.readline().strip('\n')
 
     # Computes how much time as passed since token was generated.
-    token_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
+    token_time = datetime.strptime(date, '%Y-%m-%d %H-%M-%S.%f')
     current_time = datetime.now()
     time_difference = (current_time - token_time).total_seconds() / 3600
 
