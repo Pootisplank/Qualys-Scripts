@@ -2,7 +2,7 @@
 import time
 from datetime import datetime
 from sys import exit
-import os.path
+import os
 import json
 from getpass import getpass
 
@@ -49,7 +49,7 @@ def refreshToken():
         date = file.readline().strip('\n')
 
     # Computes how much time as passed since token was generated.
-    token_time = datetime.strptime(date, '%Y-%m-%d %H-%M-%S.%f')
+    token_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
     current_time = datetime.now()
     time_difference = (current_time - token_time).total_seconds() / 3600
 
@@ -98,26 +98,30 @@ def internetFacingCount():
     has_more = 1
     final_count = 0
     if_json_list = []
-    current_time = datetime.now().strftime('%b-%d-%y-%H:%M:%S')
+    current_time = datetime.now().strftime('%b-%d-%y %H-%M-%S')
 
     headers = {
         'Authorization' : 'Bearer ' + token,
-        'includeFields' : 'tag'
     }
-        
+            
     payload = {
         'lastSeenAssetId' : last_seen_id,
         'includeFields' : 'tag',
-        'filter' : 'tags.name:TMCC - AK-Windows Assets'
+        #'filter' : 'tags.name:TMCC - AK-Windows Assets'
+        'filter' : 'tags.name:BU~*'
         #'filter' : 'tags.name:"OI: Disk Full"'
     }
 
-    while (has_more != 0):
+    # Check log folder
+    if (not(os.path.exists('logs'))):
+        os.makedirs('logs')
+        os.makedirs('./logs/error')
+    elif (not(os.path.exists('./logs/error'))):
+        os.makedirs('./logs/error')
+
+    while (pages < 20):
         # Record time for logging
         start_time = time.time()
-        
-        # Add delay between each api call
-        time.sleep(1)
         
         # Get token
         refreshToken()
@@ -126,16 +130,35 @@ def internetFacingCount():
         # Make the request
         request = requests.post(url = url, headers = headers, data = payload)
         response = formatResponse(request)
-
+            
         # Check for request error
         if (request.status_code != 200):
             time_msg += ('Page %s (Crash) - %s seconds\n' % (pages, time.time() - start_time))
             error_msg = 'Error: Status Code ' + f'{request.status_code}. Read ' + f'{pages-1}' + ' pages. Exiting program.\n' + time_msg
-            print(error_msg)
+            print(error_msg)   
             
             # Save error log
             with open(f'./logs/error/{current_time}', 'w') as file:
                 file.write(error_msg)
+                
+            if (pages == 1):
+                exit()
+                
+           # Save report progress
+            master_internet_facing = if_json_list[0]
+            master_internet_facing['lastSeenAssetId'] = payload['lastSeenAssetId']
+            for index in range(1, len(if_json_list)):
+                master_internet_facing['count'] += if_json_list[index]['count']
+                assetListData = if_json_list[index]['assetListData']['asset']
+                
+                for data in assetListData:
+                    master_internet_facing['assetListData']['asset'].append(data)
+            master_internet_facing['hasMore'] = has_more    
+            
+            # Save the final report
+            with open('internetFacing.json', 'w') as file:
+                json.dump(master_internet_facing, file, indent=4)               
+             
             exit()
                        
         # Create a json object from the response and add it to the list.
@@ -163,12 +186,13 @@ def internetFacingCount():
         
         for data in assetListData:
             master_internet_facing['assetListData']['asset'].append(data)
-        
+    master_internet_facing['hasMore'] = has_more
+    
     # Save the final report
     with open('internetFacing.json', 'w') as file:
         json.dump(master_internet_facing, file, indent=4)
-    
-    # Save log
+
+    # Save logs
     with open(f'./logs/{current_time}', 'w') as file:
         file.write(time_msg)        
         

@@ -1,0 +1,10 @@
+<ServiceRequest>
+    <preferences>
+        <limitResults>200</limitResults>
+    </preferences>
+    <filters>
+        <Criteria field="id" operator="GREATER">0</Criteria>
+        <Criteria field="tagName" operator="EQUALS">"Cloud Agent"
+        </Criteria>
+    </filters>
+</ServiceRequest>
