@@ -97,6 +97,7 @@ def internetFacingCount():
     last_seen_id = '0'
     has_more = 1
     final_count = 0
+    api_rest_time = 0
     if_json_list = []
     current_time = datetime.now().strftime('%b-%d-%y %H-%M-%S')
 
@@ -119,7 +120,16 @@ def internetFacingCount():
     elif (not(os.path.exists('./logs/error'))):
         os.makedirs('./logs/error')
 
-    while (pages < 20):
+    while (has_more != 0):
+        
+        # Wait an hour if api limit is reached
+        if (pages % 270 == 0):
+            api_rest_time = 0
+            while (api_rest_time < 60):
+                print("Waiting 1 hour for API Limit Reset: " + f'{api_rest_time}' + " minutes elapsed")
+                time.sleep(600)
+                api_rest_time += 10
+
         # Record time for logging
         start_time = time.time()
         
