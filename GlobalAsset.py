@@ -1,4 +1,4 @@
-# Import Standard Library
+# Import Standard Library 
 import time
 from datetime import datetime
 from sys import exit
@@ -84,6 +84,19 @@ def assetCount(last_seen_id):
 
     response = eval(formatResponse(request))
     return response['count']
+
+
+def mergeJson(json_list, lastSeenAssetId, has_more):
+    master_internet_facing = json_list[0]
+    master_internet_facing['lastSeenAssetId'] = lastSeenAssetId
+    for index in range(1, len(json_list)):
+        master_internet_facing['count'] += json_list[index]['count']
+        assetListData = json_list[index]['assetListData']['asset']
+                
+        for data in assetListData:
+            master_internet_facing['assetListData']['asset'].append(data)
+    master_internet_facing['hasMore'] = has_more       
+    return master_internet_facing 
         
 
 def internetFacingCount():
@@ -109,8 +122,8 @@ def internetFacingCount():
         'lastSeenAssetId' : last_seen_id,
         'includeFields' : 'tag',
         #'filter' : 'tags.name:TMCC - AK-Windows Assets'
-        'filter' : 'tags.name:BU~*'
-        #'filter' : 'tags.name:"OI: Disk Full"'
+        #'filter' : 'tags.name:BU~*'
+        'filter' : 'tags.name:"OI: Disk Full"'
     }
 
     # Check log folder
@@ -119,17 +132,19 @@ def internetFacingCount():
         os.makedirs('./logs/error')
     elif (not(os.path.exists('./logs/error'))):
         os.makedirs('./logs/error')
-
-    while (has_more != 0):
         
-        # Wait an hour if api limit is reached
-        if (pages % 270 == 0):
-            api_rest_time = 0
-            while (api_rest_time < 60):
-                print("Waiting 1 hour for API Limit Reset: " + f'{api_rest_time}' + " minutes elapsed")
-                time.sleep(600)
-                api_rest_time += 10
+    # Check if we are extending a report
+    extend_report = os.path.isfile('internetFacing.json')
+    if (extend_report):
+        with open('internetFacing.json') as file:
+            if_json_list.append(json.load(file))
+        if (if_json_list[0]['hasMore'] == 0):
+            print("Report already finished.  Exiting program.")
+            exit()
+        payload['lastSeenAssetId'] = if_json_list[0]['lastSeenAssetId']
 
+    # Request host details and save them as json
+    while (has_more != 0):
         # Record time for logging
         start_time = time.time()
         
@@ -155,15 +170,7 @@ def internetFacingCount():
                 exit()
                 
            # Save report progress
-            master_internet_facing = if_json_list[0]
-            master_internet_facing['lastSeenAssetId'] = payload['lastSeenAssetId']
-            for index in range(1, len(if_json_list)):
-                master_internet_facing['count'] += if_json_list[index]['count']
-                assetListData = if_json_list[index]['assetListData']['asset']
-                
-                for data in assetListData:
-                    master_internet_facing['assetListData']['asset'].append(data)
-            master_internet_facing['hasMore'] = has_more    
+            master_internet_facing = mergeJson(if_json_list, payload['lastSeenAssetId'], has_more)
             
             # Save the final report
             with open('internetFacing.json', 'w') as file:
@@ -188,15 +195,7 @@ def internetFacingCount():
         pages += 1
     
     # Merge all reports in the list of json objects.
-    master_internet_facing = if_json_list[0]
-    master_internet_facing['lastSeenAssetId'] = payload['lastSeenAssetId']
-    for index in range(1, len(if_json_list)):
-        master_internet_facing['count'] += if_json_list[index]['count']
-        assetListData = if_json_list[index]['assetListData']['asset']
-        
-        for data in assetListData:
-            master_internet_facing['assetListData']['asset'].append(data)
-    master_internet_facing['hasMore'] = has_more
+    master_internet_facing = mergeJson(if_json_list, payload['lastSeenAssetId'], has_more)
     
     # Save the final report
     with open('internetFacing.json', 'w') as file:
