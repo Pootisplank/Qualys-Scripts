@@ -123,7 +123,7 @@ def internetFacingCount():
         'includeFields' : 'tag',
         #'filter' : 'tags.name:TMCC - AK-Windows Assets'
         #'filter' : 'tags.name:BU~*'
-        'filter' : 'tags.name:"OI: Disk Full"'
+        #'filter' : 'tags.name:"OI: Disk Full"'
     }
 
     # Check log folder

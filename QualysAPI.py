@@ -146,3 +146,23 @@ def downloadReport(session, reportID):
   responseFormatted = formatResponse(response)
   print(responseFormatted, file=open("downloadReport.xml","w"))
 
+def collect_appliances(session):
+  url = "https://qualysapi.qualys.com/api/2.0/fo/compliance/control"
+    
+  payload = {
+    'action' : 'list',
+    'details' : 'Basic',
+    'truncation_limit': '1000000'
+  }
+    
+  headers = {
+    'X-Requested-With': 'PyRequests'
+  }
+  response = session.post(url = url, headers = headers, data = payload)
+  responseFormatted = formatResponse(response)
+  print(responseFormatted, file=open('collectAppliances.xml', 'w'))
+
+
+session = login()
+collect_appliances(session)
+logout(session)
