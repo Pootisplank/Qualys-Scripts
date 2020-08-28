@@ -9,7 +9,7 @@ def getCred():
     ini = 'cred_ini'
     cred = os.path.join(desktop, ini)
     
-    with open(cred, 'w') as file:
+    with open(cred, 'r') as file:
       username = file.readline().strip('\n')
       password = file.readline().strip('\n')
       save_location = file.readline().strip('\n')
