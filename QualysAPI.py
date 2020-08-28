@@ -1,9 +1,24 @@
 import xml.etree.ElementTree as ET
 import requests
 from getpass import getpass
+import os
+import datetime
 
-
-
+def getCred():
+    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    ini = 'cred_ini'
+    cred = os.path.join(desktop, ini)
+    
+    with open(cred, 'w') as file:
+      username = file.readline().strip('\n')
+      password = file.readline().strip('\n')
+      save_location = file.readline().strip('\n')
+    return {
+      'username' : username,
+      'password' : password,
+      'save_location' : save_location
+    }
+    
 def formatResponse(response):
   # Reformats the response
   #responseFormatted = str(response.content)
@@ -162,7 +177,5 @@ def collect_appliances(session):
   responseFormatted = formatResponse(response)
   print(responseFormatted, file=open('collectAppliances.xml', 'w'))
 
-
-session = login()
-collect_appliances(session)
-logout(session)
+dict = getCred()
+print(dict)

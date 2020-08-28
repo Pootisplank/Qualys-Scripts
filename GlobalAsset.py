@@ -9,6 +9,10 @@ from getpass import getpass
 import requests
 from QualysAPI import formatResponse
 
+# Gets user credentials and path to save files
+def getCred():
+    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    
 
 # Generates a token that expires in 4 hours.
 def generateToken():
