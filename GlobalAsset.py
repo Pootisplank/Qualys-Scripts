@@ -7,17 +7,14 @@ import json
 from getpass import getpass
 
 import requests
-from QualysAPI import formatResponse
+from QualysAPI import formatResponse, getCred
 
-# Gets user credentials and path to save files
-def getCred():
-    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-    
 
 # Generates a token that expires in 4 hours.
 def generateToken():
-    username = input('Enter the username: ')
-    password = getpass()
+    creds = getCred()
+    username = creds['username']
+    password = creds['password']
 
     url = 'https://gateway.qg1.apps.qualys.com/auth/'
 
@@ -70,26 +67,6 @@ def getToken():
     return token
 
 
-# Returns the total number of assets
-def assetCount(last_seen_id):
-    refreshToken()
-    # Get the token
-    token = getToken()
-
-    url = 'https://gateway.qg1.apps.qualys.com/am/v1/assets/host/count'
-
-    headers = {
-        'Authorization' : 'Bearer ' + token,
-        'lastSeenID' : last_seen_id
-    }
-
-    # Make the request and get count of assets
-    request = requests.post(url = url, headers = headers)
-
-    response = eval(formatResponse(request))
-    return response['count']
-
-
 def mergeJson(json_list, lastSeenAssetId, has_more):
     master_internet_facing = json_list[0]
     master_internet_facing['lastSeenAssetId'] = lastSeenAssetId
@@ -129,6 +106,11 @@ def internetFacingCount():
         #'filter' : 'tags.name:BU~*'
         #'filter' : 'tags.name:"OI: Disk Full"'
     }
+    
+    creds = getCred()
+    dt = str(datetime.utc.now().date())
+    filename = 'internetFacing_{0}.xml'.format(dt)
+    save = os.path.join(creds['save'], filename)
 
     # Check log folder
     if (not(os.path.exists('logs'))):

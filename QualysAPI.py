@@ -2,21 +2,24 @@ import xml.etree.ElementTree as ET
 import requests
 from getpass import getpass
 import os
-import datetime
+from datetime import datetime
 
+# Reads a file called cred_ini on the Desktop to obtain username, password, and location to save files.
+# cred_ini formatting: Username in first line, password in second line, save location in third line.
+# Return: The data as a python dictionary
 def getCred():
-    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop\\Qualys_Cred')
     ini = 'cred_ini'
     cred = os.path.join(desktop, ini)
     
     with open(cred, 'r') as file:
       username = file.readline().strip('\n')
       password = file.readline().strip('\n')
-      save_location = file.readline().strip('\n')
+      save = file.readline().strip('\n')
     return {
       'username' : username,
       'password' : password,
-      'save_location' : save_location
+      'save' : save
     }
     
 def formatResponse(response):
@@ -29,10 +32,13 @@ def formatResponse(response):
 
 
 def login():
-  username = input("Enter a username: ")
-  password = getpass()
-
+  creds = getCred()
+  username = creds['username']
+  password = creds['password']
+  save = os.path.join(creds['save'], 'outputLogin.xml')
+  
   url = "https://qualysapi.qualys.com/api/2.0/fo/session/"
+  
   # Query Params
   payload = {
     'action' : 'login', 
@@ -50,11 +56,14 @@ def login():
 
   # Reformats the response
   responseFormatted = formatResponse(response)
-  print(responseFormatted, file=open("outputLogin.xml","w"))
+  print(responseFormatted, file=open(save,"w"))
   return session
 
 
 def logout(session):
+  creds = getCred()
+  save = os.path.join(creds['save'], 'outputLogout.xml')
+  
   url = "https://qualysapi.qualys.com/api/2.0/fo/session/"
   payload = {'action': 'logout'}  
   headers = {
@@ -66,10 +75,13 @@ def logout(session):
 
   # Reformat and save response
   responseFormatted = formatResponse(response)
-  print(responseFormatted, file=open("outputLogout.xml","w"))
+  print(responseFormatted, file=open(save,"w"))
 
 
 def getHost(session):
+  creds = getCred()
+  save = os.path.join(creds['save'], 'hostList.xml')
+  
   url = "https://qualysapi.qualys.com/api/2.0/fo/asset/host/"
   payload = {'action':'list'}
   headers = {
@@ -80,10 +92,13 @@ def getHost(session):
 
   # Reformat and save response
   responseFormatted = formatResponse(response)
-  print(responseFormatted, file=open("hostList.xml","w"))
+  print(responseFormatted, file=open(save,"w"))
 
 
 def getReportList(session):
+  creds = getCred()
+  save = os.path.join(creds['save'], 'reportList.xml')
+  
   url = "https://qualysapi.qualys.com/api/2.0/fo/report/"
   params = {'action' : 'list'}
   data = {'Content-Type': 'text/xml'}
@@ -98,10 +113,13 @@ def getReportList(session):
   
   # Reformat and save response
   responseFormatted = formatResponse(response)
-  print(responseFormatted, file=open("reportList.xml","w"))
+  print(responseFormatted, file=open(save,"w"))
 
 
 def getReportTemplates(session):
+  creds = getCred()
+  save = os.path.join(creds['save'], 'reportTemplates.xml')
+  
   url = "https://qualysapi.qualys.com/msp/report_template_list.php"
   headers = {
     'X-Requested-With': 'PyRequests',
@@ -111,10 +129,13 @@ def getReportTemplates(session):
   
   # Reformat and save response
   responseFormatted = formatResponse(response)
-  print(responseFormatted, file=open("reportTemplates.xml","w"))
+  print(responseFormatted, file=open(save,"w"))
 
 
 def launchScoreCard(session, name):
+  creds = getCred()
+  save = os.path.join(creds['save'], 'launchScoreCard.xml')
+  
   url = "https://qualysapi.qualys.com/api/2.0/fo/report/scorecard/"
   headers = {
     'X-Requested-With': 'PyRequests',
@@ -130,7 +151,7 @@ def launchScoreCard(session, name):
 
   # Reformat and save response
   responseFormatted = formatResponse(response)
-  print(responseFormatted, file=open("launchScoreCard.xml","w"))
+  print(responseFormatted, file=open(save,"w"))
 
 
 def findReportID(session, reportName):
@@ -147,6 +168,9 @@ def findReportID(session, reportName):
 
 
 def downloadReport(session, reportID):
+  creds = getCred()
+  save = os.path.join(creds['save'], 'downloadReport.xml')
+  
   url = "https://qualysapi.qualys.com/api/2.0/fo/report/"
   headers = {
     'X-Requested-With': 'PyRequests',
@@ -159,9 +183,16 @@ def downloadReport(session, reportID):
   response = session.post(url = url, headers = headers, params = params)
   # Reformat and save response
   responseFormatted = formatResponse(response)
-  print(responseFormatted, file=open("downloadReport.xml","w"))
+  print(responseFormatted, file=open(save,"w"))
+
 
 def collect_appliances(session):
+  creds = getCred()
+  dt = str(datetime.utc.now()).replace(' ', '__').replace(':','_').replace('.','_')
+  filename = 'collectAppliances_{0}.xml'.format(dt)
+  save = os.path.join(creds['save'], filename)
+
+  
   url = "https://qualysapi.qualys.com/api/2.0/fo/compliance/control"
     
   payload = {
@@ -174,8 +205,6 @@ def collect_appliances(session):
     'X-Requested-With': 'PyRequests'
   }
   response = session.post(url = url, headers = headers, data = payload)
-  responseFormatted = formatResponse(response)
-  print(responseFormatted, file=open('collectAppliances.xml', 'w'))
+  responseFormatted = response.content.encode('utf-8')
+  print(responseFormatted, file=open(save, 'w'))
 
-dict = getCred()
-print(dict)
