@@ -4,5 +4,3 @@
 **GlobalAsset.py** - Contains functions that use the Global Asset Inventory API.
 
 **QualysAPI.py** - Contains functions that use the basic Qualys API (VM, PC)
-
-**XMLParsing.py** - Testing for XML Parsing
