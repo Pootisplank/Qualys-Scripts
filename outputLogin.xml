@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE SIMPLE_RETURN SYSTEM "https://qualysapi.qualys.com/api/2.0/simple_return.dtd">
-<SIMPLE_RETURN>
-  <RESPONSE>
-    <DATETIME>2020-08-24T22:59:03Z</DATETIME>
-    <TEXT>Logged in</TEXT>
-  </RESPONSE>
-</SIMPLE_RETURN>
-

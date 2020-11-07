@@ -102,9 +102,7 @@ def internetFacingCount():
     payload = {
         'lastSeenAssetId' : last_seen_id,
         'includeFields' : 'tag',
-        #'filter' : 'tags.name:TMCC - AK-Windows Assets'
-        #'filter' : 'tags.name:BU~*'
-        #'filter' : 'tags.name:"OI: Disk Full"'
+        'filter' : ''
     }
     
     creds = getCred()
@@ -120,9 +118,9 @@ def internetFacingCount():
         os.makedirs('./logs/error')
         
     # Check if we are extending a report
-    extend_report = os.path.isfile('internetFacing.json')
+    extend_report = os.path.isfile(save)
     if (extend_report):
-        with open('internetFacing.json') as file:
+        with open(save) as file:
             if_json_list.append(json.load(file))
         if (if_json_list[0]['hasMore'] == 0):
             print("Report already finished.  Exiting program.")
@@ -147,6 +145,7 @@ def internetFacingCount():
             time_msg += ('Page %s (Crash) - %s seconds\n' % (pages, time.time() - start_time))
             error_msg = 'Error: Status Code ' + f'{request.status_code}. Read ' + f'{pages-1}' + ' pages. Exiting program.\n' + time_msg
             print(error_msg)   
+            print('Saving Progress...')
             
             # Save error log
             with open(f'./logs/error/{current_time}', 'w') as file:
@@ -159,7 +158,7 @@ def internetFacingCount():
             master_internet_facing = mergeJson(if_json_list, payload['lastSeenAssetId'], has_more)
             
             # Save the final report
-            with open('internetFacing.json', 'w') as file:
+            with open(save, 'w') as file:
                 json.dump(master_internet_facing, file, indent=4)               
              
             exit()
@@ -184,7 +183,7 @@ def internetFacingCount():
     master_internet_facing = mergeJson(if_json_list, payload['lastSeenAssetId'], has_more)
     
     # Save the final report
-    with open('internetFacing.json', 'w') as file:
+    with open(save, 'w') as file:
         json.dump(master_internet_facing, file, indent=4)
 
     # Save logs

@@ -8,9 +8,9 @@ from datetime import datetime
 # cred_ini formatting: Username in first line, password in second line, save location in third line.
 # Return: The data as a python dictionary
 def getCred():
-    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop\\Qualys_Cred')
+    safe_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
     ini = 'cred_ini'
-    cred = os.path.join(desktop, ini)
+    cred = os.path.join(save_path, ini)
     
     with open(cred, 'r') as file:
       username = file.readline().strip('\n')
@@ -24,9 +24,6 @@ def getCred():
     
 def formatResponse(response):
   # Reformats the response
-  #responseFormatted = str(response.content)
-  #responseFormatted = responseFormatted.replace('\\n', '\n')
-  #responseFormatted = responseFormatted[2:-1]
   responseFormatted = response.content.decode('utf-8')
   return responseFormatted
 
